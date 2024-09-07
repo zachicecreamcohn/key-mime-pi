@@ -58,33 +58,42 @@ function updateKeyStatus(keystrokeId, success) {
   }
 }
 
-function onKeyDown(evt) {
+function sendKeystroke(key, keyCode, metaKey = false, altKey = false, shiftKey = false, ctrlKey = false, location = null) {
   if (!connected) {
     return;
   }
-  if (!evt.metaKey) {
-    evt.preventDefault();
-    addKeyCard(evt.key, keystrokeId);
-    processingQueue.push(keystrokeId);
-    keystrokeId++;
-  }
 
-  let location = null;
-  if (evt.location === 1) {
-    location = 'left';
-  } else if (evt.location === 2) {
-    location = 'right';
-  }
-  
+  // Add keycard to UI
+  addKeyCard(key, keystrokeId);
+  processingQueue.push(keystrokeId);
+  keystrokeId++;
+
+  // Emit keystroke event
   socket.emit('keystroke', {
-    metaKey: evt.metaKey,
-    altKey: evt.altKey,
-    shiftKey: evt.shiftKey,
-    ctrlKey: evt.ctrlKey,
-    key: evt.key,
-    keyCode: evt.keyCode,
+    metaKey: metaKey,
+    altKey: altKey,
+    shiftKey: shiftKey,
+    ctrlKey: ctrlKey,
+    key: key,
+    keyCode: keyCode,
     location: location,
   });
+}
+
+// Handle real key down event by calling sendKeystroke
+function onKeyDown(evt) {
+  if (!evt.metaKey) {
+    evt.preventDefault();
+
+    let location = null;
+    if (evt.location === 1) {
+      location = 'left';
+    } else if (evt.location === 2) {
+      location = 'right';
+    }
+
+    sendKeystroke(evt.key, evt.keyCode, evt.metaKey, evt.altKey, evt.shiftKey, evt.ctrlKey, location);
+  }
 }
 
 function onDisplayHistoryChanged(evt) {
